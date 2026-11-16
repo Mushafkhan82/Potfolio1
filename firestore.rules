@@ -1,0 +1,254 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Primitives & Identity Helpers
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Admin mutations are exclusively performed server-side via Firebase Admin SDK
+    // after verifying the single-password HMAC admin session cookie.
+    function isAdmin() {
+      return false;
+    }
+
+    // 3. Entity Validators
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt', 'updatedAt']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 160 &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 120)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 600)) &&
+             (!('role' in data) || data.role == 'client');
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['orderNumber', 'customerName', 'customerEmail', 'status', 'total', 'currency', 'items']) &&
+             data.orderNumber is string && data.orderNumber.size() >= 3 && data.orderNumber.size() <= 40 &&
+             data.customerName is string && data.customerName.size() > 0 && data.customerName.size() <= 140 &&
+             data.customerEmail is string && data.customerEmail.size() > 0 && data.customerEmail.size() <= 160 &&
+             data.status == 'pending' &&
+             data.total is number && data.total >= 0 &&
+             data.currency is string && data.currency.size() > 0 && data.currency.size() <= 8 &&
+             data.items is list && data.items.size() > 0 && data.items.size() <= 50;
+    }
+
+    function isValidOrderTracking(data) {
+      return data.keys().hasAll(['orderNumber', 'status', 'total', 'currency']) &&
+             data.keys().hasOnly(['orderNumber', 'status', 'paymentStatus', 'trackingNumber', 'courierName', 'currency', 'total', 'itemCount', 'updatedAt']) &&
+             data.orderNumber is string && data.orderNumber.size() >= 3 && data.orderNumber.size() <= 40 &&
+             data.status == 'pending' &&
+             data.currency is string && data.currency.size() <= 8 &&
+             data.total is number && data.total >= 0;
+    }
+
+    function isValidQuoteRequest(data) {
+      return data.keys().hasAll(['clientName', 'clientEmail', 'services']) &&
+             data.clientName is string && data.clientName.size() > 0 && data.clientName.size() <= 100 &&
+             data.clientEmail is string && data.clientEmail.size() > 0 && data.clientEmail.size() <= 120 &&
+             data.services is string && data.services.size() <= 200 &&
+             (!('budget' in data) || (data.budget is string && data.budget.size() <= 50)) &&
+             (!('timeline' in data) || (data.timeline is string && data.timeline.size() <= 50)) &&
+             (!('projectBrief' in data) || (data.projectBrief is string && data.projectBrief.size() <= 2000)) &&
+             (!('audioTranscript' in data) || (data.audioTranscript is string && data.audioTranscript.size() <= 2000)) &&
+             (!('status' in data) || data.status == 'submitted');
+    }
+
+    function isValidClientReview(data) {
+      return data.keys().hasAll(['authorName', 'content', 'rating']) &&
+             data.keys().hasOnly(['authorName', 'company', 'projectType', 'content', 'rating', 'verified', 'createdAt', 'userId']) &&
+             data.authorName is string && data.authorName.size() > 0 && data.authorName.size() <= 80 &&
+             data.content is string && data.content.size() > 0 && data.content.size() <= 1000 &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5;
+    }
+
+    function isValidReviewSubmission(data) {
+      return data.keys().hasAll(['name', 'rating', 'text']) &&
+             data.keys().hasOnly(['name', 'businessName', 'projectWorkedOn', 'rating', 'text', 'consentGiven', 'status', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.text is string && data.text.size() > 0 && data.text.size() <= 1500 &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+             (!('status' in data) || data.status == 'pending');
+    }
+
+    function isValidEnquiry(data) {
+      return data.keys().hasAll(['name', 'message']) &&
+             data.keys().hasOnly(['name', 'businessType', 'budget', 'message', 'email', 'preferredChannel', 'handled', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 120 &&
+             data.message is string && data.message.size() > 0 && data.message.size() <= 3000 &&
+             (!('handled' in data) || data.handled == false);
+    }
+
+    function isValidSubscriber(data) {
+      return data.keys().hasAll(['email']) &&
+             data.keys().hasOnly(['email', 'createdAt']) &&
+             data.email is string && data.email.size() >= 5 && data.email.size() <= 160;
+    }
+
+    function isValidCustomer(data) {
+      return data.keys().hasAll(['id', 'name', 'email']) &&
+             data.keys().hasOnly(['id', 'uid', 'name', 'email', 'phone', 'city', 'country', 'ordersCount', 'totalSpent', 'notes', 'lastOrderAt', 'createdAt']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 140 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 160 &&
+             (!('uid' in data) || (data.uid is string && (data.uid == '' || data.uid == request.auth.uid))) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 50)) &&
+             (!('city' in data) || (data.city is string && data.city.size() <= 100)) &&
+             (!('country' in data) || (data.country is string && data.country.size() <= 100)) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000));
+    }
+
+    // 4. User & Customer Portal Collections
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isOwner(userId) && isValidUserProfile(incoming());
+      allow update: if isValidId(userId) && isOwner(userId) && isValidUserProfile(incoming()) &&
+                       incoming().uid == existing().uid &&
+                       ((!('role' in existing()) && !('role' in incoming())) ||
+                        ('role' in existing() && 'role' in incoming() && incoming().role == existing().role));
+      allow delete: if isAdmin();
+
+      match /conversations/{convoId} {
+        allow read, write: if isValidId(userId) && isValidId(convoId) && isOwner(userId);
+      }
+    }
+
+    match /quote_requests/{quoteId} {
+      allow create: if isValidId(quoteId) && isValidQuoteRequest(incoming());
+      allow get: if isValidId(quoteId) && isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isValidId(quoteId) && isSignedIn() && resource.data.userId == request.auth.uid &&
+                       isValidQuoteRequest(incoming()) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['projectBrief', 'audioTranscript', 'budget', 'timeline']);
+      allow delete: if isAdmin();
+    }
+
+    match /client_reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isValidId(reviewId) && isValidClientReview(incoming());
+      allow update, delete: if isAdmin();
+    }
+
+    match /reviewSubmissions/{reviewId} {
+      allow create: if isValidId(reviewId) && isValidReviewSubmission(incoming());
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /enquiries/{enquiryId} {
+      allow create: if isValidId(enquiryId) && isValidEnquiry(incoming());
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /newsletter/{subId} {
+      allow create: if isValidId(subId) && isValidSubscriber(incoming());
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /newsletter_subscribers/{subId} {
+      allow create: if isValidId(subId) && isValidSubscriber(incoming());
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /live_content/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 5. Public Catalog & CMS Collections (Strict Public Read Published Only)
+    match /products/{productId} {
+      allow read: if resource.data.status == 'active';
+      allow write: if isAdmin();
+    }
+
+    match /collections/{collectionId} {
+      allow read: if resource.data.published == true;
+      allow write: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow create: if isValidId(orderId) && isValidOrder(incoming()) &&
+                       (!('customerUid' in incoming()) || incoming().customerUid == '' || (isSignedIn() && incoming().customerUid == request.auth.uid));
+      allow get: if isValidId(orderId) && isSignedIn() && resource.data.customerUid == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.customerUid == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    match /order_tracking/{orderNumber} {
+      allow get: if isValidId(orderNumber);
+      allow list: if false;
+      allow create: if isValidId(orderNumber) && isValidOrderTracking(incoming());
+      allow update, delete: if isAdmin();
+    }
+
+    match /customers/{customerId} {
+      allow get: if isValidId(customerId) && isSignedIn() && resource.data.uid == request.auth.uid;
+      allow list: if false;
+      allow create: if isValidId(customerId) && isSignedIn() && isValidCustomer(incoming());
+      allow update, delete: if isAdmin();
+    }
+
+    match /discounts/{discountId} {
+      allow get: if isValidId(discountId) && resource.data.active == true;
+      allow list: if false;
+      allow write: if isAdmin();
+    }
+
+    match /pages/{pageId} {
+      allow read: if resource.data.published == true;
+      allow write: if isAdmin();
+    }
+
+    match /posts/{postId} {
+      allow read: if resource.data.published == true;
+      allow write: if isAdmin();
+    }
+
+    match /navigation/{menuId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /media/{mediaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /siteContent/{docId} {
+      allow get: if docId == 'published' || docId == 'main';
+      allow list: if false;
+      allow write: if isAdmin();
+    }
+
+    // settings/public is readable publicly; settings/adminSession & settings/roles are private server-only
+    match /settings/{settingId} {
+      allow get: if settingId == 'public';
+      allow list: if false;
+      allow write: if isAdmin();
+    }
+  }
+}

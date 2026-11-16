@@ -1,0 +1,13 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Public read access for published storefront and portfolio media.
+    // All uploads/deletes are authenticated server-side through /api/admin/upload
+    // and written via Firebase Admin SDK (no client-side Storage writes).
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

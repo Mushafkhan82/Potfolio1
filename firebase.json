@@ -1,0 +1,10 @@
+{
+  "firestore": {
+    "database": "ai-studio-instantlaunch-3f4ae3d7-fa72-4a1a-a140-c22763478c7b",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}

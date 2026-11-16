@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: mushaf-khan-digital-studio
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_SESSION_SECRET
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: FIREBASE_DATABASE_ID
+        value: ai-studio-instantlaunch-3f4ae3d7-fa72-4a1a-a140-c22763478c7b
+      - key: FIREBASE_STORAGE_BUCKET
+        value: gen-lang-client-0757841907.firebasestorage.app
+      - key: VITE_GOOGLE_MAPS_API_KEY
+        sync: false

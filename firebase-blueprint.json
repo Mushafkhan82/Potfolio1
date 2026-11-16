@@ -1,0 +1,315 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile and studio membership details",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "maxLength": 160 },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "photoURL": { "type": "string", "maxLength": 600 },
+        "role": { "type": "string", "enum": ["client", "staff", "admin", "owner"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Storefront product catalog item with variants and SEO fields",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 180 },
+        "handle": { "type": "string", "maxLength": 160, "pattern": "^[a-z0-9-]+$" },
+        "description": { "type": "string", "maxLength": 15000 },
+        "price": { "type": "number" },
+        "compareAtPrice": { "type": "number" },
+        "cost": { "type": "number" },
+        "sku": { "type": "string", "maxLength": 80 },
+        "barcode": { "type": "string", "maxLength": 80 },
+        "stockQuantity": { "type": "number" },
+        "trackInventory": { "type": "boolean" },
+        "weight": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "draft", "archived"] },
+        "seoTitle": { "type": "string", "maxLength": 160 },
+        "metaDescription": { "type": "string", "maxLength": 320 }
+      },
+      "required": ["title", "handle", "price", "status"]
+    },
+    "Collection": {
+      "title": "Collection",
+      "description": "Manual curated product collection",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 160 },
+        "handle": { "type": "string", "maxLength": 160, "pattern": "^[a-z0-9-]+$" },
+        "description": { "type": "string", "maxLength": 2000 },
+        "imageUrl": { "type": "string", "maxLength": 1000 },
+        "sortOrder": { "type": "string", "enum": ["manual", "price-asc", "price-desc", "newest", "alpha"] },
+        "published": { "type": "boolean" }
+      },
+      "required": ["title", "handle"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer storefront order",
+      "type": "object",
+      "properties": {
+        "orderNumber": { "type": "string", "maxLength": 40 },
+        "customerUid": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 140 },
+        "customerEmail": { "type": "string", "maxLength": 160 },
+        "customerPhone": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "shipped", "delivered", "cancelled", "refunded"] },
+        "paymentStatus": { "type": "string", "enum": ["pending", "paid", "refunded", "failed"] },
+        "paymentMethod": { "type": "string", "maxLength": 60 },
+        "currency": { "type": "string", "maxLength": 8 },
+        "subtotal": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "shippingCost": { "type": "number" },
+        "taxAmount": { "type": "number" },
+        "total": { "type": "number" },
+        "trackingNumber": { "type": "string", "maxLength": 120 },
+        "internalNotes": { "type": "string", "maxLength": 2000 }
+      },
+      "required": ["orderNumber", "customerName", "customerEmail", "status", "total", "currency"]
+    },
+    "OrderTracking": {
+      "title": "OrderTracking",
+      "description": "Public non-PII tracking projection indexed by order number",
+      "type": "object",
+      "properties": {
+        "orderNumber": { "type": "string", "maxLength": 40 },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "shipped", "delivered", "cancelled", "refunded"] },
+        "paymentStatus": { "type": "string", "maxLength": 40 },
+        "trackingNumber": { "type": "string", "maxLength": 120 },
+        "currency": { "type": "string", "maxLength": 8 },
+        "total": { "type": "number" },
+        "itemCount": { "type": "number" }
+      },
+      "required": ["orderNumber", "status", "total"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "CRM customer record linked to storefront orders",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 140 },
+        "email": { "type": "string", "maxLength": 160 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "city": { "type": "string", "maxLength": 100 },
+        "country": { "type": "string", "maxLength": 100 },
+        "ordersCount": { "type": "number" },
+        "totalSpent": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 2000 }
+      },
+      "required": ["name", "email"]
+    },
+    "Discount": {
+      "title": "Discount",
+      "description": "Promotional discount code",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "maxLength": 40 },
+        "type": { "type": "string", "enum": ["percentage", "fixed", "free_shipping"] },
+        "value": { "type": "number" },
+        "minOrderAmount": { "type": "number" },
+        "usageLimit": { "type": "number" },
+        "usedCount": { "type": "number" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["code", "type", "value", "active"]
+    },
+    "CmsPage": {
+      "title": "CmsPage",
+      "description": "Storefront static CMS page",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 180 },
+        "slug": { "type": "string", "maxLength": 160, "pattern": "^[a-z0-9-]+$" },
+        "content": { "type": "string", "maxLength": 30000 },
+        "published": { "type": "boolean" },
+        "seoTitle": { "type": "string", "maxLength": 160 },
+        "metaDescription": { "type": "string", "maxLength": 320 }
+      },
+      "required": ["title", "slug", "published"]
+    },
+    "BlogPost": {
+      "title": "BlogPost",
+      "description": "Editorial blog article with cover image and SEO",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 180 },
+        "slug": { "type": "string", "maxLength": 160, "pattern": "^[a-z0-9-]+$" },
+        "excerpt": { "type": "string", "maxLength": 500 },
+        "content": { "type": "string", "maxLength": 40000 },
+        "coverImage": { "type": "string", "maxLength": 1000 },
+        "published": { "type": "boolean" }
+      },
+      "required": ["title", "slug", "published"]
+    },
+    "NavigationMenu": {
+      "title": "NavigationMenu",
+      "description": "Editable header and footer navigation menus",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 60 },
+        "title": { "type": "string", "maxLength": 120 },
+        "published": { "type": "boolean" }
+      },
+      "required": ["id", "title"]
+    },
+    "MediaAsset": {
+      "title": "MediaAsset",
+      "description": "Uploaded Firebase Storage media library item",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 180 },
+        "url": { "type": "string", "maxLength": 1200 },
+        "storagePath": { "type": "string", "maxLength": 500 },
+        "mimeType": { "type": "string", "maxLength": 100 },
+        "sizeBytes": { "type": "number" }
+      },
+      "required": ["name", "url", "storagePath"]
+    },
+    "SiteContent": {
+      "title": "SiteContent",
+      "description": "Global theme settings and homepage sections",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 60 },
+        "published": { "type": "boolean" }
+      },
+      "required": ["id"]
+    },
+    "StoreSettings": {
+      "title": "StoreSettings",
+      "description": "Store profile, currency, payments, shipping zones, tax, and role settings",
+      "type": "object",
+      "properties": {
+        "storeName": { "type": "string", "maxLength": 140 },
+        "defaultCurrency": { "type": "string", "maxLength": 8 }
+      },
+      "required": ["storeName"]
+    },
+    "QuoteRequest": {
+      "title": "QuoteRequest",
+      "description": "Client project quote requests and studio inquiries",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "clientName": { "type": "string", "maxLength": 100 },
+        "clientEmail": { "type": "string", "maxLength": 120 },
+        "services": { "type": "string", "maxLength": 200 },
+        "budget": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["submitted", "in_review", "quoted", "accepted"] }
+      },
+      "required": ["clientName", "clientEmail", "services"]
+    },
+    "ClientReview": {
+      "title": "ClientReview",
+      "description": "Verified client testimonials",
+      "type": "object",
+      "properties": {
+        "authorName": { "type": "string", "maxLength": 80 },
+        "rating": { "type": "number" },
+        "content": { "type": "string", "maxLength": 1000 }
+      },
+      "required": ["authorName", "rating", "content"]
+    },
+    "Enquiry": {
+      "title": "Enquiry",
+      "description": "Public studio contact and brief submissions",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 120 },
+        "email": { "type": "string", "maxLength": 160 },
+        "businessType": { "type": "string", "maxLength": 120 },
+        "budget": { "type": "string", "maxLength": 80 },
+        "message": { "type": "string", "maxLength": 3000 },
+        "handled": { "type": "boolean" }
+      },
+      "required": ["name", "message"]
+    },
+    "NewsletterSubscriber": {
+      "title": "NewsletterSubscriber",
+      "description": "Newsletter subscriber emails",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 160 }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile records indexed by auth UID"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "E-commerce products"
+    },
+    "/collections/{collectionId}": {
+      "schema": { "$ref": "#/entities/Collection" },
+      "description": "Curated product collections"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Storefront orders (PII isolated to admin or owning customer)"
+    },
+    "/order_tracking/{orderNumber}": {
+      "schema": { "$ref": "#/entities/OrderTracking" },
+      "description": "Public non-PII order status tracking view"
+    },
+    "/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "CRM customer records"
+    },
+    "/discounts/{discountId}": {
+      "schema": { "$ref": "#/entities/Discount" },
+      "description": "Storefront promo discount codes"
+    },
+    "/pages/{pageId}": {
+      "schema": { "$ref": "#/entities/CmsPage" },
+      "description": "Static CMS pages"
+    },
+    "/posts/{postId}": {
+      "schema": { "$ref": "#/entities/BlogPost" },
+      "description": "Store blog posts"
+    },
+    "/navigation/{menuId}": {
+      "schema": { "$ref": "#/entities/NavigationMenu" },
+      "description": "Header and footer navigation link trees"
+    },
+    "/media/{mediaId}": {
+      "schema": { "$ref": "#/entities/MediaAsset" },
+      "description": "Firebase Storage media asset metadata"
+    },
+    "/siteContent/{docId}": {
+      "schema": { "$ref": "#/entities/SiteContent" },
+      "description": "Draft and published theme + visual homepage sections"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/StoreSettings" },
+      "description": "Public store settings and private RBAC role config"
+    },
+    "/quote_requests/{quoteId}": {
+      "schema": { "$ref": "#/entities/QuoteRequest" },
+      "description": "Project quotation inquiries"
+    },
+    "/client_reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/ClientReview" },
+      "description": "Public client reviews"
+    },
+    "/enquiries/{enquiryId}": {
+      "schema": { "$ref": "#/entities/Enquiry" },
+      "description": "Contact enquiries"
+    },
+    "/newsletter_subscribers/{subId}": {
+      "schema": { "$ref": "#/entities/NewsletterSubscriber" },
+      "description": "Newsletter subscriber emails"
+    }
+  }
+}

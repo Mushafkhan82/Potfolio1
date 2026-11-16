@@ -1,0 +1,358 @@
+/* 3D Grand Architectural Arched Door Gallery
+   Full-viewport 100vw x 100vh gallery with 4 grand doors on desktop,
+   2 doors per screen with smooth horizontal scroll on mobile,
+   realistic hover half-open (rotateY(-45deg)) and click full-open (rotateY(-102deg)). */
+
+.hallway-stage {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  --hallway-wall-top: #FAF8F4;
+  --hallway-wall-mid: #F4EFE6;
+  --hallway-wall-base: #EAE3D5;
+  --hallway-floor-top: #E3DBCC;
+  --hallway-floor-bot: #D7CEBD;
+  --hallway-frame-outer: #EBE5D8;
+  --hallway-frame-inner: #BDB5A2;
+  --hallway-trim-border: #E7E3DA;
+}
+
+.hallway-corridor-bg {
+  background:
+    radial-gradient(ellipse 80% 45% at 50% 15%, rgba(255, 255, 255, 0.05) 0%, transparent 72%),
+    linear-gradient(
+      180deg,
+      var(--hallway-wall-top) 0%,
+      var(--hallway-wall-mid) 71%,
+      var(--hallway-wall-base) 76%,
+      var(--hallway-floor-top) 76.4%,
+      var(--hallway-floor-bot) 100%
+    );
+}
+
+.hallway-baseboard {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(0, 0, 0, 0.18) 45%,
+    rgba(0, 0, 0, 0.42) 100%
+  );
+}
+
+.door-unit {
+  position: relative;
+}
+
+/* Stationary architectural arched door frame / architrave */
+.door-casing {
+  position: relative;
+  border-radius: 999px 999px 12px 12px;
+  padding: 14px 14px 0 14px;
+  background: linear-gradient(
+    150deg,
+    var(--hallway-frame-outer) 0%,
+    var(--hallway-frame-inner) 100%
+  );
+  border: 1px solid var(--hallway-trim-border);
+  box-shadow:
+    0 34px 64px -18px rgba(0, 0, 0, 0.62),
+    0 10px 24px -6px rgba(0, 0, 0, 0.36),
+    inset 0 2px 3px rgba(255, 255, 255, 0.26),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.38);
+}
+
+/* Direct 3D perspective stage for door leaf and recessed interior */
+.door-aperture {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px 999px 4px 4px;
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+  box-shadow:
+    inset 0 16px 28px rgba(0, 0, 0, 0.84),
+    inset 12px 0 18px rgba(0, 0, 0, 0.58),
+    inset -12px 0 18px rgba(0, 0, 0, 0.58);
+}
+
+/* Illuminated room depth revealed behind the door */
+.door-room-interior {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 999px 999px 4px 4px;
+  overflow: hidden;
+  transform: translateZ(-16px);
+  box-shadow:
+    inset 0 24px 40px rgba(0, 0, 0, 0.72),
+    inset 0 -18px 30px rgba(0, 0, 0, 0.65);
+}
+
+.door-room-lightbeam {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 90% 62% at 50% 8%,
+    var(--room-glow, rgba(198, 244, 50, 0.38)) 0%,
+    rgba(0, 0, 0, 0) 74%
+  );
+  mix-blend-mode: screen;
+}
+
+/* 3D Swinging Arched Door Leaf anchored on left hinges */
+.door-leaf-3d {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: 999px 999px 3px 3px;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transform: rotateY(0deg);
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;
+  will-change: transform;
+  cursor: pointer;
+}
+
+/* Desktop Hover: Door physically opens halfway (~45 degrees) */
+@media (hover: hover) {
+  .door-unit:hover .door-leaf-3d {
+    transform: rotateY(-45deg);
+  }
+}
+
+.door-unit:has(.door-leaf-3d:focus-visible) .door-leaf-3d {
+  transform: rotateY(-45deg);
+}
+
+/* Click / Activate: Door swings completely open in realistic 3D */
+.door-unit[data-entering='true'] .door-leaf-3d {
+  transform: rotateY(-102deg) !important;
+  transition: transform 460ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* Front sculpted timber face (+7px half-thickness) */
+.door-face-front {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px 999px 3px 3px;
+  backface-visibility: hidden;
+  transform: translateZ(7px);
+  overflow: hidden;
+  background-color: var(--door-base, #1e4d3b);
+  background-image:
+    linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.04) 38%,
+      rgba(0, 0, 0, 0.18) 76%,
+      rgba(0, 0, 0, 0.38) 100%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.032) 0px,
+      rgba(255, 255, 255, 0.032) 1px,
+      transparent 1px,
+      transparent 4px,
+      rgba(0, 0, 0, 0.055) 4px,
+      rgba(0, 0, 0, 0.055) 6px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.055) 0px,
+      transparent 16px,
+      rgba(255, 255, 255, 0.038) 30px,
+      rgba(0, 0, 0, 0.065) 44px
+    ),
+    linear-gradient(
+      180deg,
+      var(--door-light, #28664e) 0%,
+      var(--door-base, #1e4d3b) 48%,
+      var(--door-dark, #123125) 100%
+    );
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.28),
+    inset 2px 0 4px rgba(255, 255, 255, 0.14),
+    inset -2px 0 7px rgba(0, 0, 0, 0.48),
+    inset 0 -5px 10px rgba(0, 0, 0, 0.52),
+    6px 14px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+/* Inner timber face visible during hover/open rotation */
+.door-face-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px 999px 3px 3px;
+  backface-visibility: hidden;
+  transform: rotateY(180deg) translateZ(7px);
+  background: linear-gradient(
+    180deg,
+    var(--door-light, #28664e) 0%,
+    var(--door-base, #1e4d3b) 45%,
+    var(--door-dark, #123125) 100%
+  );
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.6),
+    inset 2px 0 5px rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(0, 0, 0, 0.6);
+}
+
+/* Solid 14px 3D door slab edge thickness */
+.door-slab-edge {
+  position: absolute;
+  top: 21%;
+  bottom: 2px;
+  right: 0;
+  width: 14px;
+  transform-origin: right center;
+  transform: translateZ(7px) rotateY(90deg);
+  background: linear-gradient(
+    90deg,
+    var(--door-dark, #123125) 0%,
+    var(--door-light, #28664e) 48%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.68);
+  pointer-events: none;
+}
+
+/* Recessed architectural upper arch panel & lower molding panels */
+.door-molding-arch {
+  border-radius: 999px 999px 6px 6px;
+  box-shadow:
+    inset 0 3px 8px rgba(0, 0, 0, 0.52),
+    inset 0 -2px 4px rgba(255, 255, 255, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.16),
+    0 -1px 0 rgba(0, 0, 0, 0.34);
+  background: linear-gradient(
+    165deg,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(255, 255, 255, 0.05) 60%,
+    rgba(0, 0, 0, 0.24) 100%
+  );
+}
+
+.door-molding-rect {
+  border-radius: 5px;
+  box-shadow:
+    inset 0 3px 7px rgba(0, 0, 0, 0.5),
+    inset 0 -2px 3px rgba(255, 255, 255, 0.15),
+    0 1px 0 rgba(255, 255, 255, 0.15),
+    0 -1px 0 rgba(0, 0, 0, 0.32);
+  background: linear-gradient(
+    170deg,
+    rgba(0, 0, 0, 0.18) 0%,
+    rgba(255, 255, 255, 0.04) 55%,
+    rgba(0, 0, 0, 0.22) 100%
+  );
+}
+
+/* Golden barrel hinges on left edge */
+.door-hinge-barrel {
+  width: 8px;
+  height: 26px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    #6b5526 0%,
+    #f3dc93 38%,
+    #c9a249 68%,
+    #4c3b18 100%
+  );
+  box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.65);
+}
+
+/* Golden/brass lever handle assembly */
+.door-handle-plate {
+  width: 14px;
+  height: 44px;
+  border-radius: 7px;
+  background: linear-gradient(
+    145deg,
+    #f9e59f 0%,
+    #d2ad56 48%,
+    #775b1d 100%
+  );
+  box-shadow:
+    -2px 3px 7px rgba(0, 0, 0, 0.62),
+    inset 0 1px 1px rgba(255, 255, 255, 0.7);
+}
+
+.door-handle-lever {
+  width: 34px;
+  height: 7px;
+  border-radius: 4px;
+  background: linear-gradient(
+    180deg,
+    #fceab3 0%,
+    #d4b058 52%,
+    #74581b 100%
+  );
+  box-shadow:
+    -2px 3px 6px rgba(0, 0, 0, 0.62),
+    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  transform-origin: right center;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) {
+  .door-unit:hover .door-handle-lever {
+    transform: rotate(-16deg);
+  }
+}
+
+.door-unit[data-entering='true'] .door-handle-lever {
+  transform: rotate(-16deg);
+}
+
+/* Grounded threshold sill & projected trapezoidal floor light spill */
+.door-threshold-sill {
+  height: 11px;
+  border-radius: 3px 3px 6px 6px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(130, 124, 110, 0.9) 35%,
+    rgba(45, 42, 36, 0.96) 100%
+  );
+  box-shadow: 0 14px 28px -4px rgba(0, 0, 0, 0.66);
+}
+
+.door-floor-spill {
+  transform: perspective(360px) rotateX(68deg);
+  transform-origin: top center;
+  opacity: 0.16;
+  transition: opacity 420ms ease;
+}
+
+@media (hover: hover) {
+  .door-unit:hover .door-floor-spill {
+    opacity: 0.9;
+  }
+}
+
+.door-unit[data-entering='true'] .door-floor-spill {
+  opacity: 0.9;
+}
+
+/* Hide scrollbars cleanly for mobile horizontal door scroll */
+.hallway-scroll-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hallway-scroll-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .door-leaf-3d,
+  .door-room-interior,
+  .door-handle-lever,
+  .door-floor-spill {
+    transition-duration: 0.01ms !important;
+  }
+}
